@@ -1,6 +1,6 @@
 
 
-def run_config_find_v_inner(config, max_iter=2000, convergence_target=-0.40546510810816444):
+def run_config_find_v_inner(config, max_iter=2000, convergence_target=-0.40546510810816444, func_kwargs=None):
 
     from tardis.simulation.base import Simulation
     import pandas as pd
@@ -15,8 +15,11 @@ def run_config_find_v_inner(config, max_iter=2000, convergence_target=-0.4054651
     CONVERGENCE_TARGET = convergence_target
     show_convergence_plots = False
 
+    if func_kwargs is None:
+        func_kwargs = {}
+
     def convergence_target(sim):
-        tau_rossland, tau_planck = get_tau_integ(sim, plot=False)
+        tau_rossland, tau_planck = get_tau_integ(sim, plot=False, **func_kwargs)
         return np.log(tau_rossland[0])
         #return sim.model.w[0]
 
