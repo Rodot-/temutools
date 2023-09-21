@@ -3,7 +3,7 @@
 from astropy import units as u, constants as const
 import numpy as np
 
-def get_tau_integ(sim, tau=2.0/3, plot=False):
+def get_tau_integ(sim, tau=2.0/3, plot=False, bin_size=10):
 
     index = sim.plasma.atomic_data.lines.nu.index
     taus = sim.plasma.tau_sobolevs.loc[index]
@@ -12,7 +12,6 @@ def get_tau_integ(sim, tau=2.0/3, plot=False):
     freqs = freqs[order]
     taus = sim.plasma.tau_sobolevs.values[order]
 
-    bin_size = 10
     extra = bin_size-len(freqs)%bin_size
     extra_freqs = np.arange(extra+1)+1
     extra_taus = np.zeros((extra+1, taus.shape[1]))
