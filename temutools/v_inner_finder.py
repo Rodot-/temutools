@@ -9,7 +9,7 @@ def run_config_find_v_inner(config, max_iter=2000, convergence_target=-0.4054651
     import matplotlib.pyplot as plt
     from scipy.interpolate import interp1d
     from scipy.stats import linregress
-    from mean_opacity import get_tau_integ
+    from .mean_opacity import get_tau_integ
 
     MAX_ITER = max_iter
     CONVERGENCE_TARGET = convergence_target
