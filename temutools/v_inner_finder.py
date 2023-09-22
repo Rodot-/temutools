@@ -10,6 +10,8 @@ def run_config_find_v_inner(config, max_iter=2000, convergence_target=-0.4054651
     from scipy.interpolate import interp1d
     from scipy.stats import linregress
     from .mean_opacity import get_tau_integ
+    import yaml
+    import io
 
     MAX_ITER = max_iter
     CONVERGENCE_TARGET = convergence_target
@@ -23,8 +25,14 @@ def run_config_find_v_inner(config, max_iter=2000, convergence_target=-0.4054651
         return np.log(tau_rossland[0])
         #return sim.model.w[0]
 
+    with open(config.csvy_model, 'r') as f:
+        data = yaml.load_all(f, yaml.Loader)
+        yaml_part = next(data)
+        csv_part = io.StringIO(next(data).replace(' ', '\n'))
+
+
     density_file = config.csvy_model
-    model = pd.read_csv(density_file, sep=',', skiprows=35)
+    model = pd.read_csv(csv_part, sep=',')
     #import pdb; pdb.set_trace()
 
     converged = False
@@ -34,7 +42,7 @@ def run_config_find_v_inner(config, max_iter=2000, convergence_target=-0.4054651
     # Guess the inner most possible edge from e-scattering
     dv = model.velocity.values[1:] - model.velocity.values[:-1]
     target_tau = 2/3
-    t0 = 100*u.s
+    t0 = u.Quantity(yaml_part['model_density_time_0'])
     t = config.supernova.time_explosion#13*u.day
     rhodvt2 = model.density.values[1:]*dv * u.g/u.cm**3*u.km/u.s/t**2
     M_p = u.u
