@@ -81,7 +81,7 @@ class CSVYWriter:
                     f"Column {column} does not appear to be a valid token!"
                 )
 
-        self.csv_data = csv_data[columns].rename(columns=columns)
+        self.csv_data = csv_data[list(columns.keys())].rename(columns=columns)
         fields = [CSVYField(name=column) for column in columns.values()]
         self.metadata = CSVYHeader(
             model_density_time_0=model_density_time_0,
