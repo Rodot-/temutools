@@ -27,7 +27,7 @@ def get_tau_integ(sim, tau=2.0/3, plot=False, bin_size=10):
     freqs = freqs[1:n_bins*bin_size+1]
 
     ct = ((13*u.day*const.c).cgs.value)
-    t_rad = sim.model.t_rad.cgs.value
+    t_rad = sim.simulation_state.t_rad.cgs.value
 
     h = const.h.cgs.value
     c = const.c.cgs.value
@@ -48,18 +48,18 @@ def get_tau_integ(sim, tau=2.0/3, plot=False, bin_size=10):
     kappa_tot = kappa_thom + kappa_exp
     kappa_rossland = ((udnu*kappa_tot**-1).sum(axis=0)/(udnu.sum(axis=0)))**-1
 
-    dr = (sim.model.r_outer-sim.model.r_inner).cgs.value
+    dr = (sim.simulation_state.r_outer-sim.simulation_state.r_inner).cgs.value
     dtau = kappa_planck*dr
     planck_integ_tau = np.cumsum(dtau[::-1])[::-1]
     rossland_integ_tau = np.cumsum((kappa_rossland*dr)[::-1])[::-1]
     if plot:
         import matplotlib.pyplot as plt
         plt.figure()
-        plt.plot(sim.model.v_inner, planck_integ_tau, label='Planck')
-        plt.plot(sim.model.v_inner, rossland_integ_tau, label='Rossland')
-        plt.plot(sim.model.v_inner, np.cumsum((dr*kappa_thom)[::-1])[::-1], label='Thomson')
-        plt.plot(sim.model.v_inner, np.cumsum((dr*(Bdnu*kappa_exp).sum(axis=0)/(Bdnu.sum(axis=0)))[::-1])[::-1], label='Expansion')
+        plt.plot(sim.simulation_state.v_inner, planck_integ_tau, label='Planck')
+        plt.plot(sim.simulation_state.v_inner, rossland_integ_tau, label='Rossland')
+        plt.plot(sim.simulation_state.v_inner, np.cumsum((dr*kappa_thom)[::-1])[::-1], label='Thomson')
+        plt.plot(sim.simulation_state.v_inner, np.cumsum((dr*(Bdnu*kappa_exp).sum(axis=0)/(Bdnu.sum(axis=0)))[::-1])[::-1], label='Expansion')
         plt.legend()
         plt.yscale('log')
     kappa_planck
-    return rossland_integ_tau, planck_integ_tau#sim.model.v_inner[np.argmin((planck_integ_tau-tau)**2)], sim.model.v_inner[np.argmin((rossland_integ_tau-tau)**2)]
+    return rossland_integ_tau, planck_integ_tau
