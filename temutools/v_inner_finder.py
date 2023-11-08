@@ -23,7 +23,7 @@ def run_config_find_v_inner(config, max_iter=2000, convergence_target=-0.4054651
     def convergence_target(sim):
         tau_rossland, tau_planck = get_tau_integ(sim, plot=False, **func_kwargs)
         return np.log(tau_rossland[0])
-        #return sim.model.w[0]
+        #return sim.simulation_state.w[0]
 
     with open(config.csvy_model, 'r') as f:
         data = yaml.load_all(f, yaml.Loader)
@@ -41,7 +41,7 @@ def run_config_find_v_inner(config, max_iter=2000, convergence_target=-0.4054651
 
     # Guess the inner most possible edge from e-scattering
     dv = model.velocity.values[1:] - model.velocity.values[:-1]
-    target_tau = 2/3
+    target_tau = np.exp(CONVERGENCE_TARGET)
     t0 = u.Quantity(yaml_part['model_density_time_0'])
     t = config.supernova.time_explosion#13*u.day
     rhodvt2 = model.density.values[1:]*dv * u.g/u.cm**3*u.km/u.s/t**2
@@ -102,10 +102,10 @@ def run_config_find_v_inner(config, max_iter=2000, convergence_target=-0.4054651
         print("New v_inner:", new_v_inner, 'km/s')
         config.model.v_inner_boundary = (v_inner) * u.km/u.s
                 
-        ws = sim.model.w
-        trads = sim.model.t_rad.value
-        vel = sim.model.v_inner.value
-        t_inner = sim.model.t_inner.value
+        ws = sim.simulation_state.w
+        trads = sim.simulation_state.t_rad.value
+        vel = sim.simulation_state.v_inner.value
+        t_inner = sim.simulation_state.t_inner.value
         rho_e = sim.plasma.electron_densities
 
         interp_w = interp1d(vel, ws, fill_value='extrapolate', kind=kind)
@@ -114,31 +114,31 @@ def run_config_find_v_inner(config, max_iter=2000, convergence_target=-0.4054651
 
         # For now just set the new t_inner to the old one since it will converge when the boundary is the same
         new_t_inner = interp_t(v_inner*1e5)*u.K / (trads[0]/t_inner)
-        new_t_inner = sim.model.t_inner
+        new_t_inner = sim.simulation_state.t_inner
         config.plasma.initial_t_inner = new_t_inner
 
         new_sim = Simulation.from_config(config, show_convergence_plots=show_convergence_plots)
 
-        new_t_rad = interp_t(new_sim.model.v_inner) * u.K
-        new_t_rad[new_t_rad.value < sim.model.t_rad.value.min()] = sim.model.t_rad[0]
-        new_t_rad[new_t_rad.value > sim.model.t_rad.value.max()] = sim.model.t_rad[0]
+        new_t_rad = interp_t(new_sim.simulation_state.v_inner) * u.K
+        new_t_rad[new_t_rad.value < sim.simulation_state.t_rad.value.min()] = sim.simulation_state.t_rad[0]
+        new_t_rad[new_t_rad.value > sim.simulation_state.t_rad.value.max()] = sim.simulation_state.t_rad[0]
 
         old_e = sim.plasma.electron_densities.values
 
-        new_e = interp_e(new_sim.model.v_inner)
+        new_e = interp_e(new_sim.simulation_state.v_inner)
         new_e[new_e < old_e.min()] = old_e.min()
         new_e[new_e > old_e.max()] = old_e.max()
 
-        new_sim.model.w = interp_w(new_sim.model.v_inner) 
-        new_sim.model.w[new_sim.model.w < ws.min()] = ws.max()
-        new_sim.model.w[new_sim.model.w > ws.max()] = ws.max()
+        new_sim.simulation_state.w = interp_w(new_sim.simulation_state.v_inner) 
+        new_sim.simulation_state.w[new_sim.simulation_state.w < ws.min()] = ws.max()
+        new_sim.simulation_state.w[new_sim.simulation_state.w > ws.max()] = ws.max()
 
         sim = new_sim
 
-        sim.model.t_rad = new_t_rad
-        sim.model.t_inner = new_t_inner
+        sim.simulation_state.t_rad = new_t_rad
+        sim.simulation_state.t_inner = new_t_inner
         sim.plasma.electron_densities.update(pd.Series(new_e))
-        sim.plasma.update(t_rad=sim.model.t_rad, w=sim.model.w)
+        sim.plasma.update(t_rad=sim.simulation_state.t_rad, w=sim.simulation_state.w)
         sim.run_convergence()
         w_inner = convergence_target(sim)
         print("New w_inner:", w_inner)
